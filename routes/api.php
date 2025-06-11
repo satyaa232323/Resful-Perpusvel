@@ -1,23 +1,25 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\CategoryController;
-use Illuminate\Container\Attributes\Authenticated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-// Route::get('/user', function (Request $request) {
-//     return $request->user();
-// })->middleware('auth:sanctum');
+// Public routes
+Route::post('/auth/register', [AuthController::class, 'register']);
+Route::post('/auth/login', [AuthController::class, 'login']);
 
+// Protected routes
+Route::middleware('auth:sanctum')->group(function () {
+    // Auth routes
+    Route::post('/auth/logout', [AuthController::class, 'logout']);
 
-Route::get('/v1/book/get', [BookController::class, 'index']);
-Route::post('/v1/book/store', [BookController::class, 'store']);
+    // Books routes
+    Route::get('/v1/book/get', [BookController::class, 'index']);
+    Route::post('/v1/book/store', [BookController::class, 'store']);
 
-
-Route::get('/v1/category/index', action: [CategoryController::class, 'index']);
-Route::post('/v1/category/store', [CategoryController::class, 'store']);
-
-
-
-// Route::apiResource('/v1/category/store', BookController::class);
+    // Category routes
+    Route::get('/v1/category/index', [CategoryController::class, 'index']);
+    Route::post('/v1/category/store', [CategoryController::class, 'store']);
+});

@@ -4,9 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Helpers\ResponseHelper;
 use App\Http\Requests\BookRequest;
+use App\Http\Resources\Bookresource;
 use App\Models\Book;
-use App\Models\Category;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class BookController extends Controller
 {
@@ -21,7 +22,8 @@ class BookController extends Controller
             return ResponseHelper::jsonResponse(false, 'No books found', [], 404);
         }
         
-        return ResponseHelper::jsonResponse(true, 'Books retrieved successfully', $books, 200);
+        return ResponseHelper::jsonResponse(true, 'Books retrieved successfully', 
+            Bookresource::collection($books), 200);
     }
 
     /**
@@ -29,21 +31,20 @@ class BookController extends Controller
      */
     public function store(BookRequest $request)
     {
-        $request->validated();
+        $validated = $request->validated();
         
-        $books = new Book();
+        // Handle file upload
+        if ($request->hasFile('cover')) {
+            $file = $request->file('cover');
+            $filename = time() . '_' . Str::slug($request->title) . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('covers', $filename, 'public');
+            $validated['cover'] = $path;
+        }
 
-        $books->title = $request['title'];
-        $books->author = $request['author'];
-        $books->number_book = $request['number_book'];
-        $books->publisher = $request['publisher'];
-        $books->cover = $request['cover'];
-        $books->publication_year = $request['publication_year'];
-        $books->category_id = $request['category_id'];
-        $books->stock = $request['stock'];
-        $books->save();
+        $book = Book::create($validated);
 
-        return ResponseHelper::jsonResponse(true, 'Book created successfully', $books, 201);    
+        return ResponseHelper::jsonResponse(true, 'Book created successfully', 
+            new Bookresource($book), 201);
     }
 
     /**
@@ -51,15 +52,46 @@ class BookController extends Controller
      */
     public function show(string $id)
     {
-        
+        $book = Book::find($id);
+
+        if (!$book) {
+            return ResponseHelper::jsonResponse(false, 'Book not found', null, 404);
+        }
+
+        return ResponseHelper::jsonResponse(true, 'Book retrieved successfully', 
+            new Bookresource($book), 200);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(BookRequest $request, string $id)
     {
-        
+        $book = Book::find($id);
+
+        if (!$book) {
+            return ResponseHelper::jsonResponse(false, 'Book not found', null, 404);
+        }
+
+        $validated = $request->validated();
+
+        // Handle file upload if new cover is provided
+        if ($request->hasFile('cover')) {
+            // Delete old cover
+            if ($book->cover) {
+                Storage::disk('public')->delete($book->cover);
+            }
+
+            $file = $request->file('cover');
+            $filename = time() . '_' . Str::slug($request->title) . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('covers', $filename, 'public');
+            $validated['cover'] = $path;
+        }
+
+        $book->update($validated);
+
+        return ResponseHelper::jsonResponse(true, 'Book updated successfully', 
+            new Bookresource($book), 200);
     }
 
     /**
@@ -70,15 +102,16 @@ class BookController extends Controller
         $book = Book::find($id);
 
         if (!$book) {
-            return response()->json([
-                'message' => 'Book not found',
-            ], 404);
+            return ResponseHelper::jsonResponse(false, 'Book not found', null, 404);
+        }
+
+        // Delete cover file if exists
+        if ($book->cover) {
+            Storage::disk('public')->delete($book->cover);
         }
 
         $book->delete();
 
-        return response()->json([
-            'message' => 'Book deleted successfully',
-        ], 200);
+        return ResponseHelper::jsonResponse(true, 'Book deleted successfully', null, 200);
     }
 }
