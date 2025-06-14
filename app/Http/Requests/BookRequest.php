@@ -3,7 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-
+use Illuminate\Support\Str;
 class BookRequest extends FormRequest
 {
     /**
@@ -26,10 +26,10 @@ class BookRequest extends FormRequest
             'author' => 'required|string|max:255',
             'number_book' => 'required|string|max:255',
             'publisher' => 'required|string|max:255',
-            'publication_year' => 'required|integer,',
-            'category_id' => 'required|if_exists:categories,id',
+            'publication_year' => 'required|integer',
+            'category_id' => 'required|exists:categories,id',
             'stock' => 'required|integer',
-            'slug' => 'required|string',
+            'slug' => Str::slug($this->title, '-'),
             'cover' => 'required|image|mimes:jpeg,png,jpg,gif'
         ];
     }

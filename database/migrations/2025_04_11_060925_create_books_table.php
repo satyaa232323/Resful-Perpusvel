@@ -17,10 +17,11 @@ return new class extends Migration
             $table->string('author', );
             $table->string('number_book', );
             $table->string('publisher',);
-            $table->text('cover');
             $table->integer('publication_year');
             $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
             $table->integer('stock');
+            $table->string('slug')->unique();
+            $table->text('cover');
             $table->timestamps();
             
             // Foreign key constraint jika ada tabel categories

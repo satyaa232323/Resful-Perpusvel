@@ -65,9 +65,9 @@ class BookController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(BookRequest $request, string $id)
+    public function update(BookRequest $request, string $slug)
     {
-        $book = Book::find($id);
+        $book = Book::find($slug);
 
         if (!$book) {
             return ResponseHelper::jsonResponse(false, 'Book not found', null, 404);
@@ -97,13 +97,9 @@ class BookController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy($slug)
     {
-        $book = Book::find($id);
-
-        if (!$book) {
-            return ResponseHelper::jsonResponse(false, 'Book not found', null, 404);
-        }
+        $book = Book::where('slug', $slug)->firstOrFail();
 
         // Delete cover file if exists
         if ($book->cover) {
