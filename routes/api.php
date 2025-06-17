@@ -30,7 +30,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
     // Borrowing routes
-    Route::post('/v1/book/borrowing', [BorrowController::class, 'store']);
-    Route::get('/vi/book/my-borrowing-list', [BorrowController::class, 'index']);
-    Route::post('/v1/book/returning', [BorrowController::class, 'returnBook']);
+    Route::post('/v1/book/borrowing', [BorrowController::class, 'Borrowing']);
+    Route::get('/v1/book/my-borrowing-list', [BorrowController::class, 'index']);
+    Route::post('/v1/book/returning', [BorrowController::class, 'returnning']);
 });

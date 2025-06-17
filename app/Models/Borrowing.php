@@ -15,6 +15,13 @@ class Borrowing extends Model
         'status'
     ];
 
+    // protected $with = ['user', 'book'];
+
+    // protected $casts = [
+    //     'loan_date' => 'datetime',
+    //     'return_date' => 'datetime',
+    // ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

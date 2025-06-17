@@ -23,8 +23,7 @@ class BorrowRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'user_id' =>  Auth::id(),
-            'book_id' => 'required|exists:books,id',           
+            'book_id' => 'required|exists:books,id'           
         ];
     }
 }
