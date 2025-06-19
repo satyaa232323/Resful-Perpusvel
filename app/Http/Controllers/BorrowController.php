@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Helpers\ResponseHelper;
 use App\Http\Requests\BorrowRequest;
 use App\Models\Borrowing;
@@ -36,14 +37,14 @@ class BorrowController extends Controller
      */
     public function Borrowing(BorrowRequest $request)
     {
-       $request->validated();
-       
+        $request->validated();
+
         $borrowins = new Borrowing();
         $borrowins->user_id = $request->user()->id;
         $borrowins->book_id = $request->book_id;
         $borrowins->borrow_code = 'BRW-' . strtoupper(uniqid());
-         // Generate a unique borrow code
-         // Example: BRW-1234567890
+        // Generate a unique borrow code
+        // Example: BRW-1234567890
         $borrowins->loan_date = Carbon::now();
         $borrowins->return_date = Carbon::now()->addDays(7); // Assuming a 7-day loan period
         $borrowins->status = 'loaned'; // Initial status
@@ -53,9 +54,9 @@ class BorrowController extends Controller
         $book = Book::findOrFail($request->book_id);
         if ($book->stock <= 0) {
             return ResponseHelper::jsonResponse(false, 'Book is not available for borrowing', [], 400);
-        }   
+        }
         $book->decrement('stock');
-    
+
         return ResponseHelper::jsonResponse(
             true,
             'Book borrowed successfully',
@@ -64,31 +65,36 @@ class BorrowController extends Controller
         );
     }
 
-
-    public function returnning(BorrowRequest $request, string $id)
+    public function returnning(BorrowRequest $request)
     {
-        $returned = Borrowing::findOrFail($id);
-        if ($returned->status !== 'loaned') {
-            return ResponseHelper::jsonResponse(false, 'Book is not currently loaned', [], 400);
+        // Find active borrowing for this book and user
+        $returned = Borrowing::where('book_id', $request->book_id)
+            ->where('user_id', $request->user()->id)
+            ->where('status', 'loaned')
+            ->first();
+
+        if (!$returned) {
+            return ResponseHelper::jsonResponse(
+                'error',
+                'There is no record of borrowing this book.',
+                [],
+                400
+            );
         }
+
         $returned->status = 'returned';
         $returned->save();
-       
 
         // Increase book stock
         $book = Book::findOrFail($returned->book_id);
         $book->increment('stock');
+
         return ResponseHelper::jsonResponse(
-            true,
+            'success',
             'Book returned successfully',
-            $returned,
+            [],
             200
         );
-        
-
-        
-
-        
     }
     /**
      * Display the specified resource.
@@ -112,7 +118,7 @@ class BorrowController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    
+
 
     /**
      * Remove the specified resource from storage.
@@ -134,51 +140,4 @@ class BorrowController extends Controller
     /**
      * Return a borrowed book using just the book_id
      */
-    public function returnBook(Request $request)
-    {
-        $request->validate([
-            'book_id' => 'required|exists:books,id'
-        ]);
-
-        // Get the current active borrowing for this book and user
-        $borrowing = Borrowing::where('book_id', $request->book_id)
-            ->where('user_id', $request->user()->id)
-            ->whereIn('status', ['pending', 'approved'])
-            ->latest()
-            ->first();
-
-        if (!$borrowing) {
-            return ResponseHelper::jsonResponse(
-                false,
-                'No active borrowing found for this book',
-                [],
-                404
-            );
-        }
-
-        $returnDate = Carbon::now();
-        $dueDate = Carbon::parse($borrowing->loan_date)->addDays(7);
-        $status = $returnDate->gt($dueDate) ? 'overdue' : 'returned';
-
-        // Update the borrowing record
-        $borrowing->update([
-            'return_date' => $returnDate,
-            'status' => $status
-        ]);
-
-        // Increase book stock
-        $book = Book::findOrFail($borrowing->book_id);
-        $book->increment('stock');
-
-        $message = $status === 'overdue'
-            ? 'Book returned late. Please note the overdue status.'
-            : 'Book returned successfully';
-
-        return ResponseHelper::jsonResponse(
-            true,
-            $message,
-            $borrowing,
-            200
-        );
-    }
 }

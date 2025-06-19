@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\BorrowController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CommunityController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -30,7 +31,17 @@ Route::middleware('auth:sanctum')->group(function () {
 
 
     // Borrowing routes
+   
     Route::post('/v1/book/borrowing', [BorrowController::class, 'Borrowing']);
     Route::get('/v1/book/my-borrowing-list', [BorrowController::class, 'index']);
     Route::post('/v1/book/returning', [BorrowController::class, 'returnning']);
+
+    // Community routes
+    Route::prefix('v1/communities')->group(function () {
+        Route::get('/', [CommunityController::class, 'index']);
+        Route::post('/', [CommunityController::class, 'store']);
+        Route::get('/{id}', [CommunityController::class, 'show']);
+        Route::put('/{id}', [CommunityController::class, 'update']);
+        Route::delete('/{id}', [CommunityController::class, 'destroy']);
+    });
 });

@@ -3,16 +3,15 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Auth;
 
-class BorrowRequest extends FormRequest
+class ComunitiesRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return true; // Allow authenticated users to borrow books
+        return true;
     }
 
     /**
@@ -23,8 +22,9 @@ class BorrowRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'book_id' => 'required|exists:books,id',
-            'borrow_id' => 'sometimes|exists:borrowings,id'
+            'content' => 'required|string|max:255',
+            'image' => 'nullable|string', // Optional image upload
+            'video' => 'nullable|string', // Status can be either active or inactive
         ];
     }
 }
